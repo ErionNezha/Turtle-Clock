@@ -1,0 +1,106 @@
+<!-- Created by Erion Nezha — © 2026 All rights reserved -->
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Turtle Clock — Live Demo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0e14;color:#e6e6e6;font-family:'Segoe UI',system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:16px}
+h2{color:#fff;margin:4px 0 2px;font-size:1.3rem}
+.sub{color:#8fa3b8;font-size:.83rem;margin-bottom:12px;text-align:center;max-width:560px;line-height:1.5}
+canvas{background:#0d1117;border:1px solid #ffffff1c;border-radius:14px;box-shadow:0 12px 40px #000a;max-width:94vw}
+.hint{margin-top:10px;font-size:.8rem;color:#7b8a9c}
+footer{margin-top:14px;color:#5c6b7f;font-size:.82rem}
+footer strong{color:#9fb3c8}
+</style>
+</head>
+<body>
+<h2>🕐 Turtle Clock</h2>
+<p class="sub">Orë analoge e vizatuar me canvas — si versioni origjinal Python turtle, por tregon <strong>orën reale</strong> të pajisjes tënde, me akrepa që lëvizin live.</p>
+<canvas id="clock" width="420" height="480"></canvas>
+<p class="hint">Akrepi i kuq = sekondat · i kaltër = minutat · i gjelbër = orët</p>
+<footer>Krijuar nga <strong>Erion Nezha</strong> — © 2026</footer>
+
+<script>
+"use strict";
+// Port i Turtle_Clock.txt origjinal: SetupClock(160) + mkHand + Tick
+const cv = document.getElementById('clock');
+const g = cv.getContext('2d');
+const CX = 210, CY = 200, R = 160;
+
+const WEEK = ["E hënë","E martë","E mërkurë","E enjte","E premte","E shtunë","E diel"];
+
+// Vizatimi i kornizës — si SetupClock(radius) në origjinal
+function drawFace(){
+  g.clearRect(0, 0, cv.width, cv.height);
+  g.strokeStyle = '#e6e6e6'; g.fillStyle = '#e6e6e6';
+  for (let i = 0; i < 60; i++){
+    const a = i * 6 * Math.PI / 180;
+    const big = (i % 5 === 0);
+    const r1 = R - (big ? 20 : 0), r2 = R;
+    g.lineWidth = big ? 7 : 2;
+    g.beginPath();
+    g.moveTo(CX + r1 * Math.sin(a), CY - r1 * Math.cos(a));
+    g.lineTo(CX + r2 * Math.sin(a), CY - r2 * Math.cos(a));
+    g.stroke();
+    if (!big){
+      // pika të vogla si turtle.dot(5) në origjinal
+      g.beginPath(); g.arc(CX + (R-8) * Math.sin(a), CY - (R-8) * Math.cos(a), 2.5, 0, 7); g.fill();
+    }
+  }
+  // Numrat — si origjinali (12 lart, 6 poshtë, etj.)
+  g.fillStyle = '#fff'; g.font = 'bold 15px Courier, monospace';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (let n = 1; n <= 12; n++){
+    const a = n * 30 * Math.PI / 180;
+    g.fillText(n === 12 ? '12' : String(n), CX + (R-38) * Math.sin(a), CY - (R-38) * Math.cos(a));
+  }
+}
+
+// Akrep si poligon — si mkHand(name, length) në origjinal
+function drawHand(angleDeg, length, width, color){
+  const a = angleDeg * Math.PI / 180;
+  const tipX = CX + length * 1.1 * Math.sin(a), tipY = CY - length * 1.1 * Math.cos(a);
+  const backX = CX - length * 0.1 * Math.sin(a), backY = CY + length * 0.1 * Math.cos(a);
+  const px = Math.cos(a) * width, py = Math.sin(a) * width;
+  g.fillStyle = color;
+  // trekëndësh akrepi: baza prapa qendrës, maja përpara
+  g.beginPath();
+  g.moveTo(backX + py, backY + px);
+  g.lineTo(tipX, tipY);
+  g.lineTo(backX - py, backY - px);
+  g.closePath(); g.fill();
+  g.beginPath(); g.arc(CX, CY, width + 1, 0, 7); g.fill();
+}
+
+function tick(){
+  const t = new Date();
+  const second = t.getSeconds() + t.getMilliseconds() / 1000;
+  const minute = t.getMinutes() + second / 60;
+  const hour = (t.getHours() % 12) + minute / 60;
+
+  drawFace();
+  // Si origjinali: secHand.setheading(6*second) etj. — mode("logo"): 0° = veri
+  drawHand(6 * second, 135, 2.5, '#ff4444');
+  drawHand(6 * minute, 125, 4, '#4488ff');
+  drawHand(30 * hour, 90, 5.5, '#44dd66');
+
+  // Data poshtë — si printer.write(Week(t)) + Date(t) në origjinal
+  const wd = (t.getDay() + 6) % 7; // e hënë = 0
+  g.fillStyle = '#9fb3c8'; g.font = 'bold 15px Courier, monospace';
+  g.textAlign = 'center';
+  g.fillText(WEEK[wd], CX, CY + 110);
+  g.fillText(t.getFullYear() + ' ' + (t.getMonth()+1) + ' ' + t.getDate(), CX, CY + 136);
+  g.fillStyle = '#5c6b7f'; g.font = '13px Courier, monospace';
+  g.fillText(String(t.getHours()).padStart(2,'0') + ':' +
+             String(t.getMinutes()).padStart(2,'0') + ':' +
+             String(t.getSeconds()).padStart(2,'0'), CX, CY + 162);
+
+  requestAnimationFrame(tick);
+}
+tick();
+</script>
+</body>
+</html>
